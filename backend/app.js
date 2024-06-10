@@ -1,7 +1,20 @@
 const express = require('express');
 const bodyParser = require("body-parser");
+const mongoose = require('mongoose')
+
+const Post = require('./models/post');
+const { createShorthandPropertyAssignment } = require('typescript');
 
 const app = express();
+
+//Password: mJRGaSDVghb5WiWV
+mongoose.connect("mongodb+srv://Admin:mJRGaSDVghb5WiWV@cluster0.icdprmi.mongodb.net/node-angular?retryWrites=true&w=majority&appName=Cluster0")
+.then(() => {
+    console.log('Connected to database!');
+})
+.catch(() => {
+    console.log('Database is down');
+});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -14,22 +27,34 @@ app.use((req, res, next) => {
 })
 
 app.post("/api/posts", (req, res, next) => {
-    const post = req.body; 
-    console.log(post);
-    return res.status(201).json({
-        message: 'Post added successfully'
-    });
+    const post = new Post({
+        title: req.body.title,
+        content: req.body.content
+    }); 
+    //automagically saves to DB
+    post.save().then(createdPost => {
+        return res.status(201).json({
+            message: 'Post added successfully',
+            postId: createdPost.id
+        });
+    });   
 });
 
 app.get('/api/posts', (req, res, next) => {
-    const posts = [
-        { id: 'asdf1234', title: "First server-side post", content: "This is coming from the server"},
-        { id: 'adfasd', title: "Second server-side post", content: "This is coming from the server!"}
-    ];
-    return res.status(200).json({
-        message: 'Posts fetched succesfully!', 
-        posts: posts
-    }); 
+    Post.find()
+    .then(documents => {
+        res.status(200).json({
+            message: 'Posts fetched succesfully!', 
+            posts: documents
+        }); 
+    });
+});
+
+app.delete("/api/posts/:id", (req, res, next) => {
+    Post.deleteOne({_id: req.params.id }).then(result => {
+        console.log(result);
+        res.status(200).json({ message: "Post deleted!" });
+    })
 });
 
 //exports all app and uses, registers new middleware
