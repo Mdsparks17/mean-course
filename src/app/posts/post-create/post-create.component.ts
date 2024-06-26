@@ -24,7 +24,9 @@ export class PostCreateComponent implements OnInit{
         this.mode = 'edit';
         let param = paramMap.get('postId');
         this.postId = param !== null ? param : "";
-        this.post = this.postsService.getPost(this.postId);
+        this.postsService.getPost(this.postId).subscribe(postData => {
+          this.post = {id: postData._id, title: postData.title, content: postData.content};
+        })
       } else {
         this.mode = 'create';
         this.postId = "";
@@ -43,7 +45,5 @@ export class PostCreateComponent implements OnInit{
     } else {
       this.postsService.updatePost(this.postId, form.value.title, form.value.content);
     }
-
-
   }
 }
